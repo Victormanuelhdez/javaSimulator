@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Exam Simulator</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header id="site-header" class="site-header">
+        <div class="site-header__inner">
+            <button id="menu-button" class="icon-button mobile-menu-button" type="button" aria-label="Abrir menú">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7h16"></path>
+                    <path d="M4 12h16"></path>
+                    <path d="M4 17h16"></path>
+                </svg>
+            </button>
+
+            <a href="#" id="brand-link" class="brand">Java Exam Simulator</a>
+
+            <nav class="desktop-navigation" aria-label="Navegación principal">
+                <button class="desktop-navigation__link" data-desktop-route="home" type="button">Inicio</button>
+                <button class="desktop-navigation__link" data-desktop-route="configure" type="button">Examen</button>
+                <button class="desktop-navigation__link" data-desktop-route="glossary" type="button">Glosario</button>
+                <button class="desktop-navigation__link" data-desktop-route="history" type="button">Progreso</button>
+            </nav>
+
+            <div class="site-header__actions">
+                <button id="profile-button" class="profile-access" type="button">
+                    <span id="profile-button-name">Perfil</span>
+                </button>
+
+                <button id="theme-button" class="icon-button" type="button" aria-label="Cambiar tema">
+                    <span id="theme-icon"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="menu-overlay" class="menu-overlay hidden"></div>
+
+    <aside id="side-menu" class="side-menu" aria-hidden="true">
+        <div class="side-menu__header">
+            <strong>Menú</strong>
+            <button id="close-menu-button" class="icon-button" type="button" aria-label="Cerrar menú">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="side-menu__nav">
+            <button class="menu-link" data-route="home" type="button">Inicio</button>
+            <button class="menu-link" data-route="configure" type="button">Nuevo examen</button>
+            <button class="menu-link" data-route="glossary" type="button">Glosario</button>
+            <button class="menu-link" data-route="history" type="button">Historial</button>
+            <button class="menu-link" data-route="profile" type="button">Perfil</button>
+        </nav>
+    </aside>
+
+    <main class="app-shell">
+        <section id="profile-screen" class="screen hidden">
+            <div class="panel profile-panel">
+                <div class="centered-heading">
+                    <p class="eyebrow">Perfil de estudio</p>
+                    <h1>Tu progreso</h1>
+                    <p class="muted">
+                        Consulta tus resultados acumulados y actualiza el nombre de tu perfil.
+                    </p>
+                </div>
+
+                <div class="profile-stats">
+                    <article class="profile-stat profile-stat--attempts">
+                        <span class="profile-stat__label">Intentos</span>
+                        <strong id="profile-attempts" class="profile-stat__value">0</strong>
+                        <span class="profile-stat__description">Exámenes finalizados</span>
+                    </article>
+
+                    <article class="profile-stat profile-stat--correct">
+                        <span class="profile-stat__label">Aciertos</span>
+                        <strong id="profile-correct" class="profile-stat__value">0</strong>
+                        <span class="profile-stat__description">Respuestas correctas</span>
+                    </article>
+
+                    <article class="profile-stat profile-stat--incorrect">
+                        <span class="profile-stat__label">Errores</span>
+                        <strong id="profile-incorrect" class="profile-stat__value">0</strong>
+                        <span class="profile-stat__description">Respuestas incorrectas</span>
+                    </article>
+                </div>
+
+
+                <section class="profile-charts" aria-labelledby="progress-charts-title">
+                    <div class="centered-heading">
+                        <p class="eyebrow">Análisis visual</p>
+                        <h2 id="progress-charts-title">Evolución del estudiante</h2>
+                    </div>
+
+                    <div class="chart-grid">
+                        <article class="chart-card">
+                            <h3>Calificación por intento</h3>
+                            <p class="muted">Porcentaje obtenido en los últimos exámenes.</p>
+                            <canvas id="score-chart" class="progress-chart" width="720" height="320"></canvas>
+                        </article>
+
+                        <article class="chart-card">
+                            <h3>Respuestas acumuladas</h3>
+                            <p class="muted">Comparación entre aciertos y errores.</p>
+                            <canvas id="answers-chart" class="progress-chart" width="520" height="320"></canvas>
+                        </article>
+                    </div>
+                </section>
+
+                <form id="profile-form" class="profile-form profile-form--card">
+                    <div>
+                        <label for="name-input">Nombre del estudiante</label>
+                        <p class="muted profile-form__help">
+                            Este dato se guarda únicamente en este navegador.
+                        </p>
+                    </div>
+                    <input id="name-input" type="text" maxlength="40" autocomplete="name" required>
+                    <button class="button button--primary" type="submit">Guardar cambios</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="home-screen" class="screen hidden">
+            <div class="home-hero">
+                <div class="home-hero__content">
+                    <p class="eyebrow eyebrow--light">Preparación Java SE 17</p>
+                    <h1 id="header-welcome-title">Bienvenido</h1>
+                    <p>
+                        Practica, consulta conceptos clave y fortalece tus conocimientos
+                        con una experiencia de estudio más visual.
+                    </p>
+
+                    <div class="home-hero__actions">
+                        <button id="header-exam-button" class="button button--light" type="button">
+                            Configurar examen
+                        </button>
+                        <button id="header-glossary-button" class="button button--glass" type="button">
+                            Consultar glosario
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="learning-options">
+                <button class="learning-card learning-card--exam" data-home-route="configure" type="button">
+                    <span class="learning-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 5h6"></path>
+                            <path d="M9 9h6"></path>
+                            <path d="M9 13h4"></path>
+                            <path d="M5 3h14v18H5z"></path>
+                        </svg>
+                    </span>
+                    <span class="learning-card__title">Examen</span>
+                    <span class="learning-card__text">Configura una sesión de práctica aleatoria.</span>
+                </button>
+
+                <button class="learning-card learning-card--glossary" data-home-route="glossary" type="button">
+                    <span class="learning-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path>
+                            <path d="M4 5.5v16"></path>
+                        </svg>
+                    </span>
+                    <span class="learning-card__title">Glosario</span>
+                    <span class="learning-card__text">Encuentra conceptos mediante palabras clave.</span>
+                </button>
+
+                <button class="learning-card learning-card--history" data-home-route="history" type="button">
+                    <span class="learning-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 3v18h18"></path>
+                            <path d="m7 15 4-4 3 3 5-6"></path>
+                        </svg>
+                    </span>
+                    <span class="learning-card__title">Progreso</span>
+                    <span class="learning-card__text">Consulta resultados y evolución reciente.</span>
+                </button>
+            </div>
+
+            <div class="summary-grid">
+                <article class="summary-card">
+                    <span id="best-score" class="summary-card__value">0%</span>
+                    <span class="summary-card__label">Mejor resultado</span>
+                </article>
+                <article class="summary-card">
+                    <span id="exam-count" class="summary-card__value">0</span>
+                    <span class="summary-card__label">Exámenes realizados</span>
+                </article>
+                <article class="summary-card">
+                    <span id="saved-progress" class="summary-card__value">No</span>
+                    <span class="summary-card__label">Examen pendiente</span>
+                </article>
+            </div>
+
+            <div id="resume-panel" class="panel resume-panel hidden">
+                <div>
+                    <p class="eyebrow">Sesión guardada</p>
+                    <h2>Continúa tu examen</h2>
+                    <p class="muted">Tu avance fue guardado automáticamente.</p>
+                </div>
+                <button id="resume-button" class="button button--secondary" type="button">
+                    Continuar
+                </button>
+            </div>
+        </section>
+
+
+        <section id="configure-screen" class="screen hidden">
+            <div class="panel configuration-panel">
+                <div class="centered-heading">
+                    <p class="eyebrow">Nueva práctica</p>
+                    <h1>Configura tu examen</h1>
+                    <p class="muted">
+                        Elige la cantidad de reactivos y el tipo de práctica que deseas realizar.
+                    </p>
+                </div>
+
+                <form id="exam-configuration-form" class="configuration-form">
+                    <fieldset class="configuration-group">
+                        <legend>Cantidad de preguntas</legend>
+                        <div class="choice-grid">
+                            <label class="choice-card">
+                                <input type="radio" name="question-count" value="5">
+                                <span>
+                                    <strong>5 preguntas</strong>
+                                    <small>Práctica rápida</small>
+                                </span>
+                            </label>
+
+                            <label class="choice-card">
+                                <input type="radio" name="question-count" value="10" checked>
+                                <span>
+                                    <strong>10 preguntas</strong>
+                                    <small>Prototipo completo</small>
+                                </span>
+                            </label>
+
+                            <label class="choice-card">
+                                <input type="radio" name="question-count" value="40">
+                                <span>
+                                    <strong>40 preguntas</strong>
+                                    <small>Simulación completa</small>
+                                </span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="configuration-group">
+                        <legend>Temario</legend>
+                        <label class="topic-selector" for="topic-select">
+                            <span>Tema del examen</span>
+                            <select id="topic-select" name="topic">
+                                <option value="all">Todos los temas</option>
+                            </select>
+                            <small>
+                                Selecciona un tema específico o utiliza todo el banco de reactivos.
+                            </small>
+                        </label>
+                    </fieldset>
+
+                    <div class="configuration-actions">
+                        <button class="button button--secondary" data-route-button="home" type="button">
+                            Regresar
+                        </button>
+                        <button class="button button--primary" type="submit">
+                            Comenzar examen
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="exam-screen" class="screen hidden">
+            <div class="exam-header">
+                <div>
+                    <p id="question-topic" class="eyebrow"></p>
+                    <h1 id="question-progress">Pregunta 1 de 10</h1>
+                </div>
+                <div class="progress-track" aria-label="Progreso del examen">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <article class="panel question-card">
+                <div class="question-meta">
+                    <span id="question-difficulty" class="badge"></span>
+                    <span id="question-type" class="badge badge--neutral"></span>
+                </div>
+
+                <h2 id="question-text" class="question-title"></h2>
+                <pre id="question-code" class="code-block hidden"><code></code></pre>
+
+                <form id="answer-form" class="answer-list"></form>
+
+                <div class="question-actions question-actions--spread">
+                    <button id="previous-question-button" class="button button--secondary" type="button">
+                        Pregunta anterior
+                    </button>
+
+                    <div class="question-actions__right">
+                        <button id="submit-answer-button" class="button button--primary" type="button">
+                            Enviar respuesta
+                        </button>
+                        <button id="next-question-button" class="button button--secondary hidden" type="button">
+                            Siguiente pregunta
+                        </button>
+                    </div>
+                </div>
+
+                <div id="feedback" class="feedback hidden" role="status" aria-live="polite">
+                    <div id="feedback-icon" class="feedback__icon" aria-hidden="true"></div>
+                    <div>
+                        <h3 id="feedback-title"></h3>
+                        <p id="feedback-answer"></p>
+                        <p id="feedback-explanation"></p>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section id="glossary-screen" class="screen hidden">
+            <div class="panel glossary-header">
+                <p class="eyebrow">Consulta rápida</p>
+                <h1>Glosario Java</h1>
+                <p class="muted">Busca por término, categoría o palabra clave.</p>
+
+                <label class="search-box" for="glossary-search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <path d="m20 20-3.5-3.5"></path>
+                    </svg>
+                    <input id="glossary-search" type="search" placeholder="Ejemplo: lambda, final, collection">
+                </label>
+            </div>
+
+            <div id="glossary-results" class="glossary-grid"></div>
+        </section>
+
+        <section id="history-screen" class="screen hidden">
+            <div class="panel history-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Actividad reciente</p>
+                        <h1>Historial</h1>
+                    </div>
+                    <button id="clear-history-button" class="button button--ghost" type="button">
+                        Limpiar historial
+                    </button>
+                </div>
+                <div id="history-list" class="history-list"></div>
+            </div>
+        </section>
+
+        <section id="result-screen" class="screen hidden">
+            <div class="panel result-panel">
+                <p class="eyebrow">Examen finalizado</p>
+                <h1>Resultado</h1>
+
+                <div class="score-circle">
+                    <span id="score-percentage">0%</span>
+                </div>
+
+                <p id="score-summary" class="result-summary"></p>
+
+                <div class="result-grid">
+                    <article>
+                        <span id="correct-count" class="result-value"></span>
+                        <span class="result-label">Correctas</span>
+                    </article>
+                    <article>
+                        <span id="incorrect-count" class="result-value"></span>
+                        <span class="result-label">Incorrectas</span>
+                    </article>
+                </div>
+
+                <div class="result-actions">
+                    <button id="restart-button" class="button button--primary" type="button">
+                        Intentar de nuevo
+                    </button>
+                    <button id="home-button" class="button button--secondary" type="button">
+                        Volver al inicio
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="data/questions.js"></script>
+    <script src="data/glossary.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
