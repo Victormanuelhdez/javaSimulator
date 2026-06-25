@@ -1,7 +1,7 @@
 ````markdown
 # Java Exam Simulator
 
-Java Exam Simulator es una aplicación web desarrollada como herramienta de estudio para la preparación del examen de certificación **Oracle Certified Professional: Java SE 17 Developer**.
+Java Exam Simulator es una aplicación web desarrollada como herramienta  de estudio para la preparación del examen de certificación **Oracle Certified Professional: Java SE 17 Developer**.
 
 La plataforma permite practicar mediante exámenes aleatorios, consultar conceptos importantes en un glosario y llevar un registro del progreso del estudiante.
 
