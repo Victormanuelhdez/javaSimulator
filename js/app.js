@@ -41,7 +41,9 @@ const elements = {
     questionDifficulty: document.getElementById("question-difficulty"),
     questionType: document.getElementById("question-type"),
     questionText: document.getElementById("question-text"),
+    questionCodeCard: document.getElementById("question-code-card"),
     questionCode: document.getElementById("question-code"),
+    copyCodeButton: document.getElementById("copy-code-button"),
     answerForm: document.getElementById("answer-form"),
     previousButton: document.getElementById("previous-question-button"),
     submitButton: document.getElementById("submit-answer-button"),
@@ -296,12 +298,17 @@ function renderQuestion() {
         question.type === "multiple" ? "Respuesta múltiple" : "Respuesta única";
     elements.questionText.textContent = stripInlineMarkdown(question.question);
 
-    if (question.code.trim()) {
-        elements.questionCode.classList.remove("hidden");
-        elements.questionCode.querySelector("code").textContent = question.code;
+    const codeElement = elements.questionCode.querySelector("code");
+    const questionCode = question.code?.trim() || "";
+
+    if (questionCode) {
+        elements.questionCodeCard.classList.remove("hidden");
+        codeElement.textContent = questionCode;
+        elements.copyCodeButton.textContent = "Copiar código";
+        elements.questionCodeCard.querySelector(".code-card__body").scrollLeft = 0;
     } else {
-        elements.questionCode.classList.add("hidden");
-        elements.questionCode.querySelector("code").textContent = "";
+        elements.questionCodeCard.classList.add("hidden");
+        codeElement.textContent = "";
     }
 
     elements.answerForm.innerHTML = "";
@@ -476,6 +483,30 @@ function finishExam() {
     refreshProfileStats();
     refreshHome();
     showScreen("result");
+}
+
+async function copyQuestionCode() {
+    const code = elements.questionCode.querySelector("code").textContent;
+    if (!code.trim()) return;
+
+    try {
+        await navigator.clipboard.writeText(code);
+        elements.copyCodeButton.textContent = "Código copiado";
+    } catch {
+        const textArea = document.createElement("textarea");
+        textArea.value = code;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+        elements.copyCodeButton.textContent = "Código copiado";
+    }
+
+    window.setTimeout(() => {
+        elements.copyCodeButton.textContent = "Copiar código";
+    }, 1500);
 }
 
 function normalizeText(value) {
@@ -849,6 +880,7 @@ elements.resumeButton.addEventListener("click", resumeExam);
 elements.previousButton.addEventListener("click", goToPreviousQuestion);
 elements.submitButton.addEventListener("click", submitAnswer);
 elements.nextButton.addEventListener("click", goToNextQuestion);
+elements.copyCodeButton.addEventListener("click", copyQuestionCode);
 elements.restartButton.addEventListener("click", () => {
     startExam(activeConfiguration.questionCount, activeConfiguration.topic);
 });

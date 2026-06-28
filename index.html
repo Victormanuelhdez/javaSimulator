@@ -294,7 +294,17 @@
                 </div>
 
                 <h2 id="question-text" class="question-title"></h2>
-                <pre id="question-code" class="code-block hidden"><code></code></pre>
+                <div id="question-code-card" class="code-card hidden">
+                    <div class="code-card__header">
+                        <span class="code-card__language">Java</span>
+                        <button id="copy-code-button" class="code-card__copy" type="button">
+                            Copiar código
+                        </button>
+                    </div>
+                    <div class="code-card__body">
+                        <pre id="question-code"><code></code></pre>
+                    </div>
+                </div>
 
                 <form id="answer-form" class="answer-list"></form>
 

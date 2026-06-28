@@ -1508,3 +1508,125 @@ body.home-view .learning-options {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* Responsive Java code card */
+.code-card {
+    width: 100%;
+    min-width: 0;
+    margin: 1.5rem auto;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--code-background);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+    text-align: left;
+}
+
+.code-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 44px;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.code-card__language {
+    color: #dce7f3;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.code-card__copy {
+    min-height: 34px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    background: transparent;
+    color: #f8fafc;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.code-card__copy:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.code-card__body {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.code-card pre,
+#question-code {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1.2rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--code-text);
+    white-space: pre;
+    overflow: visible;
+    tab-size: 4;
+    text-align: left;
+}
+
+.code-card code,
+#question-code code {
+    display: block;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+    font-variant-ligatures: none;
+}
+
+@media (max-width: 600px) {
+    .question-card {
+        min-width: 0;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .question-title {
+        font-size: clamp(1.35rem, 6vw, 1.75rem);
+        overflow-wrap: anywhere;
+    }
+
+    .code-card {
+        width: 100%;
+        margin: 1.1rem 0;
+        border-radius: 11px;
+    }
+
+    .code-card__header {
+        padding: 0.5rem 0.7rem;
+    }
+
+    .code-card pre,
+    #question-code {
+        padding: 0.9rem;
+    }
+
+    .code-card code,
+    #question-code code {
+        font-size: 0.76rem;
+        line-height: 1.55;
+    }
+}
