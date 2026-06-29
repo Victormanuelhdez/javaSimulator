@@ -1510,16 +1510,16 @@ body.home-view .learning-options {
 }
 
 
-/* Responsive Java code card */
+/* Bloque de código responsive: conserva indentación y evita mezclarlo con el enunciado */
 .code-card {
     width: 100%;
     min-width: 0;
     margin: 1.5rem auto;
     overflow: hidden;
-    border: 1px solid var(--border);
+    border: 1px solid #2f4056;
     border-radius: 14px;
-    background: var(--code-background);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+    background: #0f1722;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
     text-align: left;
 }
 
@@ -1530,26 +1530,25 @@ body.home-view .learning-options {
     gap: 1rem;
     min-height: 44px;
     padding: 0.6rem 0.9rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    background: #182434;
 }
 
 .code-card__language {
-    color: #dce7f3;
-    font-size: 0.75rem;
+    color: #d9e4f0;
+    font-size: 0.76rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
 .code-card__copy {
-    min-height: 34px;
-    padding: 0.35rem 0.7rem;
+    padding: 0.42rem 0.72rem;
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 8px;
     background: transparent;
     color: #f8fafc;
-    font-size: 0.75rem;
+    font-size: 0.76rem;
     font-weight: 700;
 }
 
@@ -1557,40 +1556,37 @@ body.home-view .learning-options {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.code-card__body {
-    display: block;
+.code-card__scroll {
     width: 100%;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
 }
 
-.code-card pre,
-#question-code {
+.code-card pre {
     display: block;
     width: max-content;
     min-width: 100%;
-    max-width: none;
     margin: 0;
     padding: 1.2rem;
     border: 0;
     border-radius: 0;
     background: transparent;
-    color: var(--code-text);
+    color: #f8fafc;
     white-space: pre;
-    overflow: visible;
     tab-size: 4;
     text-align: left;
+    overflow: visible;
 }
 
-.code-card code,
-#question-code code {
+.code-card code {
     display: block;
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
     font-size: 0.9rem;
-    line-height: 1.65;
+    font-weight: 400;
+    line-height: 1.62;
     white-space: pre;
     word-break: normal;
     overflow-wrap: normal;
@@ -1600,33 +1596,31 @@ body.home-view .learning-options {
 @media (max-width: 600px) {
     .question-card {
         min-width: 0;
-        padding-left: 1rem;
-        padding-right: 1rem;
     }
 
     .question-title {
-        font-size: clamp(1.35rem, 6vw, 1.75rem);
+        font-size: clamp(1.35rem, 6vw, 1.9rem);
+        line-height: 1.35;
         overflow-wrap: anywhere;
     }
 
     .code-card {
         width: 100%;
-        margin: 1.1rem 0;
+        margin: 1.1rem 0 1.35rem;
         border-radius: 11px;
     }
 
     .code-card__header {
+        min-height: 40px;
         padding: 0.5rem 0.7rem;
     }
 
-    .code-card pre,
-    #question-code {
+    .code-card pre {
         padding: 0.9rem;
     }
 
-    .code-card code,
-    #question-code code {
+    .code-card code {
         font-size: 0.76rem;
-        line-height: 1.55;
+        line-height: 1.52;
     }
 }

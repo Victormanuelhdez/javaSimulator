@@ -284,6 +284,49 @@ function stripInlineMarkdown(value) {
         .trim();
 }
 
+function splitQuestionContent(question) {
+    const explicitCode = String(question.code || "").trim();
+    let prompt = String(question.question || "").trim();
+
+    if (explicitCode) {
+        return { prompt: stripInlineMarkdown(prompt), code: explicitCode };
+    }
+
+    const fenced = prompt.match(/```(?:java)?\s*\n?([\s\S]*?)```/i);
+    if (fenced) {
+        return {
+            prompt: stripInlineMarkdown(prompt.replace(fenced[0], "").trim()),
+            code: fenced[1].trim()
+        };
+    }
+
+    const backticked = prompt.match(/`([^`]*[;{}][^`]*)`/s);
+    if (backticked) {
+        return {
+            prompt: stripInlineMarkdown(prompt.replace(backticked[0], "").trim()),
+            code: backticked[1].trim()
+        };
+    }
+
+    const lines = prompt.split(/\r?\n/);
+    const codeStart = lines.findIndex((line, index) => {
+        if (index === 0) return false;
+        return /^\s*(?:package|import|public|protected|private|abstract|final|static|class|interface|enum|record|@\w+|var|boolean|byte|short|int|long|float|double|char|String|Object|List|Set|Map|Stream|LocalDate|LocalTime|LocalDateTime|ZonedDateTime|Instant|Duration|Period|Path|Files\.|System\.)\b/.test(line);
+    });
+
+    if (codeStart > 0) {
+        const possibleCode = lines.slice(codeStart).join("\n").trim();
+        if (/[;{}]/.test(possibleCode)) {
+            return {
+                prompt: stripInlineMarkdown(lines.slice(0, codeStart).join("\n").trim()),
+                code: possibleCode
+            };
+        }
+    }
+
+    return { prompt: stripInlineMarkdown(prompt), code: "" };
+}
+
 function renderQuestion() {
     const question = examQuestions[currentQuestionIndex];
     const savedAnswer = answersByQuestion[question.id];
@@ -296,16 +339,16 @@ function renderQuestion() {
     elements.questionDifficulty.textContent = question.difficulty;
     elements.questionType.textContent =
         question.type === "multiple" ? "Respuesta múltiple" : "Respuesta única";
-    elements.questionText.textContent = stripInlineMarkdown(question.question);
-
+    const content = splitQuestionContent(question);
     const codeElement = elements.questionCode.querySelector("code");
-    const questionCode = question.code?.trim() || "";
 
-    if (questionCode) {
+    elements.questionText.textContent = content.prompt;
+
+    if (content.code) {
         elements.questionCodeCard.classList.remove("hidden");
-        codeElement.textContent = questionCode;
+        codeElement.textContent = content.code;
         elements.copyCodeButton.textContent = "Copiar código";
-        elements.questionCodeCard.querySelector(".code-card__body").scrollLeft = 0;
+        elements.questionCodeCard.querySelector(".code-card__scroll").scrollLeft = 0;
     } else {
         elements.questionCodeCard.classList.add("hidden");
         codeElement.textContent = "";
@@ -483,30 +526,6 @@ function finishExam() {
     refreshProfileStats();
     refreshHome();
     showScreen("result");
-}
-
-async function copyQuestionCode() {
-    const code = elements.questionCode.querySelector("code").textContent;
-    if (!code.trim()) return;
-
-    try {
-        await navigator.clipboard.writeText(code);
-        elements.copyCodeButton.textContent = "Código copiado";
-    } catch {
-        const textArea = document.createElement("textarea");
-        textArea.value = code;
-        textArea.style.position = "fixed";
-        textArea.style.opacity = "0";
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        textArea.remove();
-        elements.copyCodeButton.textContent = "Código copiado";
-    }
-
-    window.setTimeout(() => {
-        elements.copyCodeButton.textContent = "Copiar código";
-    }, 1500);
 }
 
 function normalizeText(value) {
@@ -826,6 +845,30 @@ function refreshHome() {
     elements.resumePanel.classList.toggle("hidden", !session);
 }
 
+async function copyQuestionCode() {
+    const code = elements.questionCode.querySelector("code").textContent;
+    if (!code.trim()) return;
+
+    try {
+        await navigator.clipboard.writeText(code);
+        elements.copyCodeButton.textContent = "Código copiado";
+    } catch {
+        const textarea = document.createElement("textarea");
+        textarea.value = code;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+        elements.copyCodeButton.textContent = "Código copiado";
+    }
+
+    window.setTimeout(() => {
+        elements.copyCodeButton.textContent = "Copiar código";
+    }, 1500);
+}
+
 elements.profileForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const name = elements.nameInput.value.trim();
@@ -847,6 +890,7 @@ elements.menuButton.addEventListener("click", openMenu);
 elements.closeMenuButton.addEventListener("click", closeMenu);
 elements.menuOverlay.addEventListener("click", closeMenu);
 elements.themeButton.addEventListener("click", toggleTheme);
+elements.copyCodeButton.addEventListener("click", copyQuestionCode);
 elements.headerExamButton.addEventListener("click", () => routeTo("configure"));
 elements.headerGlossaryButton.addEventListener("click", () => routeTo("glossary"));
 
@@ -880,7 +924,6 @@ elements.resumeButton.addEventListener("click", resumeExam);
 elements.previousButton.addEventListener("click", goToPreviousQuestion);
 elements.submitButton.addEventListener("click", submitAnswer);
 elements.nextButton.addEventListener("click", goToNextQuestion);
-elements.copyCodeButton.addEventListener("click", copyQuestionCode);
 elements.restartButton.addEventListener("click", () => {
     startExam(activeConfiguration.questionCount, activeConfiguration.topic);
 });
