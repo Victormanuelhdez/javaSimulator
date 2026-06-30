@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Java Exam Simulator</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css?v=20260630-0900">
 </head>
 <body>
     <header id="site-header" class="site-header">
@@ -17,7 +20,16 @@
                 </svg>
             </button>
 
-            <a href="#" id="brand-link" class="brand">Java Exam Simulator</a>
+            <a href="#" id="brand-link" class="brand" aria-label="Ir al inicio">
+                <svg class="brand__java-cup" viewBox="0 0 64 64" aria-hidden="true">
+                    <path d="M17 27h29v15c0 9-6 15-14.5 15S17 51 17 42V27Z"></path>
+                    <path d="M46 31h4c6 0 9 3 9 8s-4 9-11 9h-3"></path>
+                    <path d="M24 20c-5-5 6-7 1-14"></path>
+                    <path d="M35 20c-5-5 6-7 1-14"></path>
+                    <path d="M11 58h43"></path>
+                </svg>
+                <span class="brand__text">Java Exam Simulator</span>
+            </a>
 
             <nav class="desktop-navigation" aria-label="Navegación principal">
                 <button class="desktop-navigation__link" data-desktop-route="home" type="button">Inicio</button>
@@ -36,6 +48,25 @@
                 </button>
             </div>
         </div>
+        <div class="home-hero">
+                <div class="home-hero__content">
+                    <p class="eyebrow eyebrow--light">Preparación Java SE 17</p>
+                    <h1 id="header-welcome-title">Bienvenido</h1>
+                    <p>
+                        Practica, consulta conceptos clave y fortalece tus conocimientos
+                        con una experiencia de estudio más visual.
+                    </p>
+
+                    <div class="home-hero__actions">
+                        <button id="header-exam-button" class="button button--light" type="button">
+                            Configurar examen
+                        </button>
+                        <button id="header-glossary-button" class="button button--glass" type="button">
+                            Consultar glosario
+                        </button>
+                    </div>
+                </div>
+            </div>
     </header>
 
     <div id="menu-overlay" class="menu-overlay hidden"></div>
@@ -81,13 +112,13 @@
                     <article class="profile-stat profile-stat--correct">
                         <span class="profile-stat__label">Aciertos</span>
                         <strong id="profile-correct" class="profile-stat__value">0</strong>
-                        <span class="profile-stat__description">Respuestas correctas</span>
+                        <span class="profile-stat__description">Puntos obtenidos</span>
                     </article>
 
                     <article class="profile-stat profile-stat--incorrect">
                         <span class="profile-stat__label">Errores</span>
                         <strong id="profile-incorrect" class="profile-stat__value">0</strong>
-                        <span class="profile-stat__description">Respuestas incorrectas</span>
+                        <span class="profile-stat__description">Puntos no obtenidos</span>
                     </article>
                 </div>
 
@@ -107,7 +138,7 @@
 
                         <article class="chart-card">
                             <h3>Respuestas acumuladas</h3>
-                            <p class="muted">Comparación entre aciertos y errores.</p>
+                            <p class="muted">Comparación entre puntos obtenidos y no obtenidos.</p>
                             <canvas id="answers-chart" class="progress-chart" width="520" height="320"></canvas>
                         </article>
                     </div>
@@ -127,25 +158,6 @@
         </section>
 
         <section id="home-screen" class="screen hidden">
-            <div class="home-hero">
-                <div class="home-hero__content">
-                    <p class="eyebrow eyebrow--light">Preparación Java SE 17</p>
-                    <h1 id="header-welcome-title">Bienvenido</h1>
-                    <p>
-                        Practica, consulta conceptos clave y fortalece tus conocimientos
-                        con una experiencia de estudio más visual.
-                    </p>
-
-                    <div class="home-hero__actions">
-                        <button id="header-exam-button" class="button button--light" type="button">
-                            Configurar examen
-                        </button>
-                        <button id="header-glossary-button" class="button button--glass" type="button">
-                            Consultar glosario
-                        </button>
-                    </div>
-                </div>
-            </div>
             <div class="learning-options">
                 <button class="learning-card learning-card--exam" data-home-route="configure" type="button">
                     <span class="learning-card__icon" aria-hidden="true">
@@ -293,7 +305,9 @@
                     <span id="question-type" class="badge badge--neutral"></span>
                 </div>
 
-                <h2 id="question-text" class="question-title"></h2>
+                <section class="question-prompt-card" aria-labelledby="question-text">
+                    <h2 id="question-text" class="question-title"></h2>
+                </section>
                 <section id="question-code-card" class="code-card hidden" aria-label="Código Java de la pregunta">
                     <div class="code-card__header">
                         <span class="code-card__language">Java</span>
@@ -382,6 +396,10 @@
                         <span class="result-label">Correctas</span>
                     </article>
                     <article>
+                        <span id="partial-count" class="result-value"></span>
+                        <span class="result-label">Parciales</span>
+                    </article>
+                    <article>
                         <span id="incorrect-count" class="result-value"></span>
                         <span class="result-label">Incorrectas</span>
                     </article>
@@ -399,8 +417,8 @@
         </section>
     </main>
 
-    <script src="data/questions.js"></script>
-    <script src="data/glossary.js"></script>
-    <script src="js/app.js"></script>
+    <script src="data/questions.js?v=20260630-0900"></script>
+    <script src="data/glossary.js?v=20260630-0900"></script>
+    <script src="js/app.js?v=20260630-0900"></script>
 </body>
 </html>

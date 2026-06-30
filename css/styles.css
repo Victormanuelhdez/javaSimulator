@@ -1624,3 +1624,112 @@ body.home-view .learning-options {
         line-height: 1.52;
     }
 }
+
+/* Focused update: integrated landing header and consistent question prompt card */
+
+.site-header > .home-hero {
+    display: none;
+}
+
+body.home-view .site-header {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0 0 28px 28px;
+    background:
+        radial-gradient(circle at 18% 15%, rgba(255, 255, 255, 0.18), transparent 21rem),
+        radial-gradient(circle at 85% 25%, rgba(255, 255, 255, 0.12), transparent 18rem),
+        linear-gradient(120deg, #1ba2b3 0%, #58689c 52%, #9a1e62 100%);
+    box-shadow: 0 18px 45px rgba(41, 54, 95, 0.22);
+}
+
+body.home-view .site-header > .home-hero {
+    display: grid;
+    width: min(1180px, calc(100% - 2rem));
+    min-height: 330px;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vw, 4.5rem);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.home-view .app-shell {
+    padding-top: 2.5rem;
+}
+
+.question-prompt-card {
+    width: 100%;
+    min-height: 132px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 1.35rem;
+    padding: clamp(1.15rem, 2.8vw, 1.9rem);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-soft);
+}
+
+.question-prompt-card .question-title {
+    width: 100%;
+    max-width: 900px;
+    margin: 0;
+    font-size: clamp(1.35rem, 2.4vw, 2rem);
+    line-height: 1.45;
+    font-weight: 800;
+    text-align: center;
+    overflow-wrap: break-word;
+    word-break: normal;
+    text-wrap: balance;
+}
+
+
+.question-prompt-card--long {
+    align-items: flex-start;
+}
+
+.question-prompt-card--long .question-title {
+    max-width: 1040px;
+    font-size: clamp(1.15rem, 1.8vw, 1.55rem);
+    line-height: 1.55;
+    text-align: left;
+    text-wrap: pretty;
+}
+
+@media (max-width: 600px) {
+    body.home-view .site-header {
+        border-radius: 0 0 20px 20px;
+    }
+
+    body.home-view .site-header > .home-hero {
+        width: min(100% - 1rem, 1180px);
+        min-height: 285px;
+        padding: 1.6rem 1rem 2rem;
+    }
+
+    .question-prompt-card {
+        min-height: 0;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 14px;
+    }
+
+    .question-prompt-card .question-title {
+        font-size: 1.05rem;
+        line-height: 1.55;
+        text-align: left;
+        text-wrap: pretty;
+        overflow-wrap: anywhere;
+    }
+}
+
+
+
+/* Ajustes solicitados: marca de inicio y evaluación parcial */
+.site-header .brand { display:inline-flex; align-items:center; justify-self:start; gap:.55rem; min-width:0; color:#fff; text-decoration:none; }
+.brand__java-cup { width:2rem; height:2rem; flex:0 0 auto; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+.brand__text { font-family:"Great Vibes","Brush Script MT",cursive; font-size:clamp(2rem,3vw,2.75rem); font-weight:400; line-height:1; letter-spacing:.01em; white-space:nowrap; }
+.feedback--partial { color:#78540d; border-color:#d9b45c; background:#fff9e8; }
+html[data-theme="dark"] .feedback--partial { color:#ffe3a0; border-color:#8c6a24; background:#3a2d12; }
+.result-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media (max-width:600px) { .brand__java-cup{width:1.65rem;height:1.65rem}.brand__text{max-width:190px;overflow:hidden;font-size:1.75rem;text-overflow:ellipsis}.result-grid{grid-template-columns:1fr} }

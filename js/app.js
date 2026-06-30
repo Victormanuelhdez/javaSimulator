@@ -60,6 +60,7 @@ const elements = {
     scorePercentage: document.getElementById("score-percentage"),
     scoreSummary: document.getElementById("score-summary"),
     correctCount: document.getElementById("correct-count"),
+    partialCount: document.getElementById("partial-count"),
     incorrectCount: document.getElementById("incorrect-count"),
     restartButton: document.getElementById("restart-button"),
     homeButton: document.getElementById("home-button")
@@ -284,19 +285,22 @@ function stripInlineMarkdown(value) {
         .trim();
 }
 
+function joinCodeBlocks(firstBlock, secondBlock) {
+    return [firstBlock, secondBlock]
+        .map((block) => String(block || "").trim())
+        .filter(Boolean)
+        .join("\n\n");
+}
+
 function splitQuestionContent(question) {
     const explicitCode = String(question.code || "").trim();
     let prompt = String(question.question || "").trim();
-
-    if (explicitCode) {
-        return { prompt: stripInlineMarkdown(prompt), code: explicitCode };
-    }
 
     const fenced = prompt.match(/```(?:java)?\s*\n?([\s\S]*?)```/i);
     if (fenced) {
         return {
             prompt: stripInlineMarkdown(prompt.replace(fenced[0], "").trim()),
-            code: fenced[1].trim()
+            code: joinCodeBlocks(fenced[1], explicitCode)
         };
     }
 
@@ -304,7 +308,28 @@ function splitQuestionContent(question) {
     if (backticked) {
         return {
             prompt: stripInlineMarkdown(prompt.replace(backticked[0], "").trim()),
-            code: backticked[1].trim()
+            code: joinCodeBlocks(backticked[1], explicitCode)
+        };
+    }
+
+    const inlineCodeAfterPrompt = prompt.match(
+        /^([\s\S]*?[?:])\s+((?:(?:public|protected|private|static|final|abstract|class|interface|enum|record|void|var|boolean|byte|short|int|long|float|double|char|String)\b|(?:[A-Z][\w.$]*(?:<[^>]+>)?(?:\[\])?\s+\w+\s*=))[\s\S]*)$/
+    );
+
+    if (
+        inlineCodeAfterPrompt &&
+        /[;{}]/.test(inlineCodeAfterPrompt[2])
+    ) {
+        return {
+            prompt: stripInlineMarkdown(inlineCodeAfterPrompt[1]),
+            code: joinCodeBlocks(inlineCodeAfterPrompt[2], explicitCode)
+        };
+    }
+
+    if (explicitCode) {
+        return {
+            prompt: stripInlineMarkdown(prompt),
+            code: explicitCode
         };
     }
 
@@ -324,7 +349,10 @@ function splitQuestionContent(question) {
         }
     }
 
-    return { prompt: stripInlineMarkdown(prompt), code: "" };
+    return {
+        prompt: stripInlineMarkdown(prompt),
+        code: ""
+    };
 }
 
 function renderQuestion() {
@@ -343,6 +371,9 @@ function renderQuestion() {
     const codeElement = elements.questionCode.querySelector("code");
 
     elements.questionText.textContent = content.prompt;
+    elements.questionText
+        .closest(".question-prompt-card")
+        ?.classList.toggle("question-prompt-card--long", content.prompt.length > 160);
 
     if (content.code) {
         elements.questionCodeCard.classList.remove("hidden");
@@ -401,9 +432,26 @@ function getSelectedAnswers() {
         .sort((first, second) => first - second);
 }
 
-function arraysAreEqual(first, second) {
-    return first.length === second.length &&
-        first.every((value, index) => value === second[index]);
+function evaluateAnswer(selectedAnswers, correctAnswers) {
+    const selected = new Set(selectedAnswers);
+    const correct = new Set(correctAnswers);
+    const hasIncorrectSelection = [...selected].some((answer) => !correct.has(answer));
+    const selectedCorrectCount = [...selected].filter((answer) => correct.has(answer)).length;
+
+    if (hasIncorrectSelection || selectedCorrectCount === 0) {
+        return { status: "incorrect", score: 0, selectedCorrectCount, totalCorrectAnswers: correct.size };
+    }
+
+    if (selectedCorrectCount === correct.size) {
+        return { status: "correct", score: 1, selectedCorrectCount, totalCorrectAnswers: correct.size };
+    }
+
+    return {
+        status: "partial",
+        score: selectedCorrectCount / correct.size,
+        selectedCorrectCount,
+        totalCorrectAnswers: correct.size
+    };
 }
 
 function submitAnswer() {
@@ -416,12 +464,17 @@ function submitAnswer() {
     }
 
     const correctAnswers = [...question.correctAnswers].sort((a, b) => a - b);
-    const isCorrect = arraysAreEqual(selectedAnswers, correctAnswers);
+    const evaluation = evaluateAnswer(selectedAnswers, correctAnswers);
 
     answersByQuestion[question.id] = {
         selectedAnswers,
         submitted: true,
-        correct: isCorrect
+        correct: evaluation.status === "correct",
+        partial: evaluation.status === "partial",
+        status: evaluation.status,
+        score: evaluation.score,
+        selectedCorrectCount: evaluation.selectedCorrectCount,
+        totalCorrectAnswers: evaluation.totalCorrectAnswers
     };
 
     persistSession();
@@ -447,15 +500,34 @@ function restoreSubmittedState(question, savedAnswer) {
         .map((index) => stripInlineMarkdown(question.options[index]))
         .join(" | ");
 
-    elements.feedback.className =
-        `feedback ${savedAnswer.correct ? "feedback--correct" : "feedback--incorrect"}`;
-    elements.feedbackIcon.innerHTML = savedAnswer.correct ? icons.check : icons.cross;
-    elements.feedbackTitle.textContent =
-        savedAnswer.correct ? "Respuesta correcta" : "Respuesta incorrecta";
-    elements.feedbackAnswer.textContent =
-        savedAnswer.correct ? "" : `Respuesta correcta: ${answerText}`;
-    elements.feedbackExplanation.textContent =
-        stripInlineMarkdown(question.explanation);
+    const answerStatus = savedAnswer.status || (savedAnswer.correct ? "correct" : "incorrect");
+    const feedbackClass = {
+        correct: "feedback--correct",
+        partial: "feedback--partial",
+        incorrect: "feedback--incorrect"
+    }[answerStatus];
+
+    elements.feedback.className = `feedback ${feedbackClass}`;
+    elements.feedbackIcon.innerHTML = answerStatus === "incorrect" ? icons.cross : icons.check;
+
+    if (answerStatus === "correct") {
+        elements.feedbackTitle.textContent = "Respuesta correcta";
+        elements.feedbackAnswer.textContent = "";
+    } else if (answerStatus === "partial") {
+        const selectedCorrectCount = Number(savedAnswer.selectedCorrectCount) ||
+            savedAnswer.selectedAnswers.filter((answer) => correctAnswers.includes(answer)).length;
+        const partialScore = Number(savedAnswer.score) || selectedCorrectCount / correctAnswers.length;
+
+        elements.feedbackTitle.textContent = "Respuesta parcialmente correcta";
+        elements.feedbackAnswer.textContent =
+            `Seleccionaste ${selectedCorrectCount} de ${correctAnswers.length} respuestas correctas. ` +
+            `Puntaje: ${formatScore(partialScore)} de 1. Respuesta completa: ${answerText}`;
+    } else {
+        elements.feedbackTitle.textContent = "Respuesta incorrecta";
+        elements.feedbackAnswer.textContent = `Respuesta correcta: ${answerText}`;
+    }
+
+    elements.feedbackExplanation.textContent = stripInlineMarkdown(question.explanation);
 
     elements.submitButton.classList.add("hidden");
     elements.nextButton.classList.remove("hidden");
@@ -484,37 +556,49 @@ function goToNextQuestion() {
     finishExam();
 }
 
+function formatScore(value) {
+    const rounded = Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+}
+
 function finishExam() {
     const totalQuestions = examQuestions.length;
-    const correctAnswersCount = Object.values(answersByQuestion)
-        .filter((answer) => answer.correct).length;
-    const incorrectAnswers = totalQuestions - correctAnswersCount;
-    const percentage = Math.round((correctAnswersCount / totalQuestions) * 100);
+    const answers = examQuestions.map((question) => {
+        const savedAnswer = answersByQuestion[question.id] || {};
+        const status = savedAnswer.status || (savedAnswer.correct ? "correct" : "incorrect");
+        const score = Number.isFinite(Number(savedAnswer.score))
+            ? Number(savedAnswer.score)
+            : savedAnswer.correct ? 1 : 0;
+        return { question, status, score };
+    });
 
+    const correctAnswersCount = answers.filter((answer) => answer.status === "correct").length;
+    const partialAnswersCount = answers.filter((answer) => answer.status === "partial").length;
+    const incorrectAnswersCount = answers.filter((answer) => answer.status === "incorrect").length;
+    const earnedPoints = answers.reduce((sum, answer) => sum + answer.score, 0);
+    const percentage = Math.round((earnedPoints / totalQuestions) * 100);
     const topicStats = {};
 
-    examQuestions.forEach((question) => {
+    answers.forEach(({ question, status, score }) => {
         if (!topicStats[question.topic]) {
-            topicStats[question.topic] = { correct: 0, incorrect: 0 };
+            topicStats[question.topic] = { correct: 0, partial: 0, incorrect: 0, points: 0 };
         }
-
-        if (answersByQuestion[question.id]?.correct) {
-            topicStats[question.topic].correct += 1;
-        } else {
-            topicStats[question.topic].incorrect += 1;
-        }
+        topicStats[question.topic][status] += 1;
+        topicStats[question.topic].points += score;
     });
 
     elements.scorePercentage.textContent = `${percentage}%`;
-    elements.scoreSummary.textContent =
-        `Respondiste correctamente ${correctAnswersCount} de ${totalQuestions} preguntas.`;
+    elements.scoreSummary.textContent = `Obtuviste ${formatScore(earnedPoints)} de ${totalQuestions} puntos.`;
     elements.correctCount.textContent = correctAnswersCount;
-    elements.incorrectCount.textContent = incorrectAnswers;
+    elements.partialCount.textContent = partialAnswersCount;
+    elements.incorrectCount.textContent = incorrectAnswersCount;
 
     saveExamResult({
         date: new Date().toISOString(),
         correct: correctAnswersCount,
-        incorrect: incorrectAnswers,
+        partial: partialAnswersCount,
+        incorrect: incorrectAnswersCount,
+        earnedPoints,
         total: totalQuestions,
         percentage,
         topic: activeConfiguration.topic,
@@ -608,8 +692,16 @@ function renderHistory() {
         const date = document.createElement("p");
         const topic = document.createElement("p");
 
+        const earnedPoints = Number.isFinite(Number(result.earnedPoints))
+            ? Number(result.earnedPoints)
+            : Number(result.correct || 0);
+        const partialAnswers = Number(result.partial || 0);
+
         score.innerHTML =
-            `<strong>${result.percentage}%</strong> — ${result.correct} de ${result.total} correctas`;
+            `<strong>${result.percentage}%</strong> — ${formatScore(earnedPoints)} de ${result.total} puntos` +
+            (partialAnswers > 0
+                ? ` · ${partialAnswers} ${partialAnswers === 1 ? "parcial" : "parciales"}`
+                : "");
         date.className = "history-entry__date";
         date.textContent = new Intl.DateTimeFormat("es-MX", {
             dateStyle: "medium",
@@ -737,9 +829,17 @@ function drawAnswersChart(history) {
 
     context.clearRect(0, 0, width, height);
 
-    const correct = history.reduce((sum, item) => sum + Number(item.correct || 0), 0);
-    const incorrect = history.reduce((sum, item) => sum + Number(item.incorrect || 0), 0);
-    const total = correct + incorrect;
+    const correct = history.reduce((sum, item) => {
+        const earnedPoints = Number.isFinite(Number(item.earnedPoints))
+            ? Number(item.earnedPoints)
+            : Number(item.correct || 0);
+        return sum + earnedPoints;
+    }, 0);
+    const total = history.reduce((sum, item) => {
+        const fallbackTotal = Number(item.correct || 0) + Number(item.incorrect || 0);
+        return sum + Number(item.total || fallbackTotal);
+    }, 0);
+    const incorrect = Math.max(0, total - correct);
 
     context.font = "14px system-ui";
 
@@ -784,10 +884,10 @@ function drawAnswersChart(history) {
     context.fillStyle = colors.text;
     context.textAlign = "center";
     context.font = "700 24px system-ui";
-    context.fillText(String(total), centerX, centerY + 6);
+    context.fillText(formatScore(total), centerX, centerY + 6);
     context.font = "13px system-ui";
     context.fillStyle = colors.muted;
-    context.fillText("respuestas", centerX, centerY + 26);
+    context.fillText("puntos posibles", centerX, centerY + 26);
 
     context.font = "14px system-ui";
     context.textAlign = "left";
@@ -796,12 +896,12 @@ function drawAnswersChart(history) {
     context.fillStyle = colors.correct;
     context.fillRect(18, legendY - 12, 14, 14);
     context.fillStyle = colors.text;
-    context.fillText(`Aciertos: ${correct}`, 40, legendY);
+    context.fillText(`Puntos: ${formatScore(correct)}`, 40, legendY);
 
     context.fillStyle = colors.incorrect;
     context.fillRect(width / 2, legendY - 12, 14, 14);
     context.fillStyle = colors.text;
-    context.fillText(`Errores: ${incorrect}`, width / 2 + 22, legendY);
+    context.fillText(`No obtenidos: ${formatScore(incorrect)}`, width / 2 + 22, legendY);
 }
 
 function drawProfileCharts() {
@@ -812,20 +912,21 @@ function drawProfileCharts() {
 
 function refreshProfileStats() {
     const history = getExamHistory();
-
-    const totalCorrect = history.reduce(
-        (sum, result) => sum + Number(result.correct || 0),
-        0
-    );
-    const totalIncorrect = history.reduce(
-        (sum, result) => sum + Number(result.incorrect || 0),
-        0
-    );
+    const totalEarnedPoints = history.reduce((sum, result) => {
+        const earnedPoints = Number.isFinite(Number(result.earnedPoints))
+            ? Number(result.earnedPoints)
+            : Number(result.correct || 0);
+        return sum + earnedPoints;
+    }, 0);
+    const totalPossiblePoints = history.reduce((sum, result) => {
+        const fallbackTotal = Number(result.correct || 0) + Number(result.incorrect || 0);
+        return sum + Number(result.total || fallbackTotal);
+    }, 0);
+    const totalMissedPoints = Math.max(0, totalPossiblePoints - totalEarnedPoints);
 
     elements.profileAttempts.textContent = history.length;
-    elements.profileCorrect.textContent = totalCorrect;
-    elements.profileIncorrect.textContent = totalIncorrect;
-
+    elements.profileCorrect.textContent = formatScore(totalEarnedPoints);
+    elements.profileIncorrect.textContent = formatScore(totalMissedPoints);
     window.requestAnimationFrame(drawProfileCharts);
 }
 
