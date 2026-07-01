@@ -30,6 +30,7 @@ const elements = {
     nameInput: document.getElementById("name-input"),
     configurationForm: document.getElementById("exam-configuration-form"),
     topicSelect: document.getElementById("topic-select"),
+    availableQuestions: document.getElementById("available-questions"),
     bestScore: document.getElementById("best-score"),
     examCount: document.getElementById("exam-count"),
     savedProgress: document.getElementById("saved-progress"),
@@ -37,6 +38,7 @@ const elements = {
     resumeButton: document.getElementById("resume-button"),
     questionTopic: document.getElementById("question-topic"),
     questionProgress: document.getElementById("question-progress"),
+    examConfigurationSummary: document.getElementById("exam-configuration-summary"),
     progressBar: document.getElementById("progress-bar"),
     questionDifficulty: document.getElementById("question-difficulty"),
     questionType: document.getElementById("question-type"),
@@ -59,6 +61,7 @@ const elements = {
     historyList: document.getElementById("history-list"),
     scorePercentage: document.getElementById("score-percentage"),
     scoreSummary: document.getElementById("score-summary"),
+    resultConfigurationSummary: document.getElementById("result-configuration-summary"),
     correctCount: document.getElementById("correct-count"),
     partialCount: document.getElementById("partial-count"),
     incorrectCount: document.getElementById("incorrect-count"),
@@ -83,7 +86,12 @@ const icons = {
 let examQuestions = [];
 let currentQuestionIndex = 0;
 let answersByQuestion = {};
-let activeConfiguration = { questionCount: 40, topic: "all" };
+let activeConfiguration = {
+    questionCount: 40,
+    topic: "all",
+    javaVersion: 11,
+    difficulty: "BALANCED"
+};
 
 function readJson(key, fallback) {
     const value = localStorage.getItem(key);
@@ -224,21 +232,100 @@ function populateTopics() {
     });
 }
 
-function startExam(questionCount = 40, topic = "all") {
-    const source = topic === "all"
-        ? QUESTION_BANK
-        : QUESTION_BANK.filter((question) => question.topic === topic);
+function getCompatibleQuestions(javaVersion, topic) {
+    return QUESTION_BANK.filter((question) => {
+        const matchesVersion = Array.isArray(question.javaVersions)
+            ? question.javaVersions.includes(javaVersion)
+            : Number(question.minimumJavaVersion || 8) <= javaVersion;
+        const matchesTopic = topic === "all" || question.topic === topic;
+        return matchesVersion && matchesTopic;
+    });
+}
 
+function buildDistributedExam(source, questionCount, distribution) {
+    const groups = {
+        EASY: shuffle(source.filter((q) => q.difficultyLevel === "EASY")),
+        MEDIUM: shuffle(source.filter((q) => q.difficultyLevel === "MEDIUM")),
+        HARD: shuffle(source.filter((q) => q.difficultyLevel === "HARD"))
+    };
+    const targets = {
+        EASY: Math.floor(questionCount * distribution.EASY),
+        MEDIUM: Math.floor(questionCount * distribution.MEDIUM),
+        HARD: Math.floor(questionCount * distribution.HARD)
+    };
+    let assigned = targets.EASY + targets.MEDIUM + targets.HARD;
+    const remainderOrder = ["MEDIUM", "EASY", "HARD"];
+    let index = 0;
+    while (assigned < questionCount) {
+        targets[remainderOrder[index % remainderOrder.length]] += 1;
+        assigned += 1;
+        index += 1;
+    }
+    const selected = [];
+    const selectedIds = new Set();
+    Object.entries(targets).forEach(([difficulty, amount]) => {
+        groups[difficulty].slice(0, amount).forEach((question) => {
+            selected.push(question);
+            selectedIds.add(question.id);
+        });
+    });
+    if (selected.length < questionCount) {
+        const remaining = shuffle(source.filter((question) => !selectedIds.has(question.id)));
+        selected.push(...remaining.slice(0, questionCount - selected.length));
+    }
+    return shuffle(selected);
+}
+
+function getDifficultyLabel(difficulty) {
+    return { EASY: "Fácil", MEDIUM: "Media", HARD: "Difícil", BALANCED: "Equilibrada", JUNIOR: "Java Junior", RANDOM: "Aleatoria" }[difficulty] || difficulty;
+}
+
+function getTopicLabel(topic) {
+    return topic === "all" ? "Todos los temas" : topic;
+}
+
+function getConfigurationSummary(configuration) {
+    return `Java ${configuration.javaVersion} · ${getDifficultyLabel(configuration.difficulty)} · ${configuration.questionCount} preguntas · ${getTopicLabel(configuration.topic)}`;
+}
+
+function getConfigurationSource(javaVersion, topic, difficulty) {
+    const compatibleQuestions = getCompatibleQuestions(javaVersion, topic);
+    return ["EASY", "MEDIUM", "HARD"].includes(difficulty)
+        ? compatibleQuestions.filter((question) => question.difficultyLevel === difficulty)
+        : compatibleQuestions;
+}
+
+function updateAvailableQuestions() {
+    const formData = new FormData(elements.configurationForm);
+    const javaVersion = Number(formData.get("java-version")) || 11;
+    const topic = formData.get("topic") || "all";
+    const difficulty = formData.get("difficulty") || "BALANCED";
+    const questionCount = Number(formData.get("question-count")) || 10;
+    const available = getConfigurationSource(javaVersion, topic, difficulty).length;
+    elements.availableQuestions.textContent = `${available} preguntas disponibles con esta configuración.`;
+    elements.availableQuestions.classList.toggle("availability-message--warning", available < questionCount);
+}
+
+function startExam(questionCount = 40, topic = "all", javaVersion = 11, difficulty = "BALANCED") {
+    const source = getConfigurationSource(javaVersion, topic, difficulty);
     if (source.length === 0) {
-        window.alert("No hay preguntas disponibles para el tema seleccionado.");
+        window.alert("No hay preguntas disponibles con la versión, dificultad y tema seleccionados.");
         return;
     }
-
-    examQuestions = shuffle(source).slice(0, Math.min(questionCount, source.length));
+    if (source.length < questionCount) {
+        window.alert(`Solo hay ${source.length} preguntas disponibles con esta configuración. Selecciona una cantidad menor o amplía los filtros.`);
+        return;
+    }
+    if (difficulty === "BALANCED") {
+        examQuestions = buildDistributedExam(source, questionCount, { EASY: 0.3, MEDIUM: 0.4, HARD: 0.3 });
+    } else if (difficulty === "JUNIOR") {
+        examQuestions = buildDistributedExam(source, questionCount, { EASY: 0.5, MEDIUM: 0.4, HARD: 0.1 });
+    } else {
+        examQuestions = shuffle(source).slice(0, questionCount);
+    }
     currentQuestionIndex = 0;
     answersByQuestion = {};
-    activeConfiguration = { questionCount, topic };
-
+    activeConfiguration = { questionCount, topic, javaVersion, difficulty };
     persistSession();
     showScreen("exam");
     renderQuestion();
@@ -257,9 +344,12 @@ function resumeExam() {
         .filter(Boolean);
     currentQuestionIndex = session.currentQuestionIndex || 0;
     answersByQuestion = session.answersByQuestion || {};
-    activeConfiguration = session.configuration || {
+    activeConfiguration = {
         questionCount: examQuestions.length,
-        topic: "all"
+        topic: "all",
+        javaVersion: 11,
+        difficulty: "BALANCED",
+        ...(session.configuration || {})
     };
 
     showScreen("exam");
@@ -362,6 +452,7 @@ function renderQuestion() {
     elements.questionTopic.textContent = question.topic;
     elements.questionProgress.textContent =
         `Pregunta ${currentQuestionIndex + 1} de ${examQuestions.length}`;
+    elements.examConfigurationSummary.textContent = getConfigurationSummary(activeConfiguration);
     elements.progressBar.style.width =
         `${((currentQuestionIndex + 1) / examQuestions.length) * 100}%`;
     elements.questionDifficulty.textContent = question.difficulty;
@@ -588,6 +679,7 @@ function finishExam() {
     });
 
     elements.scorePercentage.textContent = `${percentage}%`;
+    elements.resultConfigurationSummary.textContent = getConfigurationSummary(activeConfiguration);
     elements.scoreSummary.textContent = `Obtuviste ${formatScore(earnedPoints)} de ${totalQuestions} puntos.`;
     elements.correctCount.textContent = correctAnswersCount;
     elements.partialCount.textContent = partialAnswersCount;
@@ -602,6 +694,8 @@ function finishExam() {
         total: totalQuestions,
         percentage,
         topic: activeConfiguration.topic,
+        javaVersion: activeConfiguration.javaVersion,
+        difficulty: activeConfiguration.difficulty,
         topicStats
     });
 
@@ -1011,14 +1105,18 @@ document.querySelectorAll("[data-route-button]").forEach((button) => {
     button.addEventListener("click", () => routeTo(button.dataset.routeButton));
 });
 
+elements.configurationForm.addEventListener("change", updateAvailableQuestions);
+
 elements.configurationForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const formData = new FormData(elements.configurationForm);
     const questionCount = Number(formData.get("question-count")) || 40;
     const topic = formData.get("topic") || "all";
+    const javaVersion = Number(formData.get("java-version")) || 11;
+    const difficulty = formData.get("difficulty") || "BALANCED";
 
-    startExam(questionCount, topic);
+    startExam(questionCount, topic, javaVersion, difficulty);
 });
 
 elements.resumeButton.addEventListener("click", resumeExam);
@@ -1026,7 +1124,12 @@ elements.previousButton.addEventListener("click", goToPreviousQuestion);
 elements.submitButton.addEventListener("click", submitAnswer);
 elements.nextButton.addEventListener("click", goToNextQuestion);
 elements.restartButton.addEventListener("click", () => {
-    startExam(activeConfiguration.questionCount, activeConfiguration.topic);
+    startExam(
+        activeConfiguration.questionCount,
+        activeConfiguration.topic,
+        activeConfiguration.javaVersion,
+        activeConfiguration.difficulty
+    );
 });
 elements.homeButton.addEventListener("click", () => routeTo("home"));
 
@@ -1048,6 +1151,7 @@ window.addEventListener("resize", () => {
 });
 
 populateTopics();
+updateAvailableQuestions();
 applyTheme(getTheme());
 renderGlossary();
 renderHistory();

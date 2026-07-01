@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css?v=20260630-0900">
+    <link rel="stylesheet" href="css/styles.css?v=20260701-three-improvements">
 </head>
 <body>
     <header id="site-header" class="site-header">
@@ -229,11 +229,30 @@
                     <p class="eyebrow">Nueva práctica</p>
                     <h1>Configura tu examen</h1>
                     <p class="muted">
-                        Elige la cantidad de reactivos y el tipo de práctica que deseas realizar.
+                        Elige la versión de Java, la dificultad, la cantidad de reactivos y el tema.
                     </p>
                 </div>
 
                 <form id="exam-configuration-form" class="configuration-form">
+                    <fieldset class="configuration-group">
+                        <legend>Versión de Java</legend>
+                        <div class="choice-grid choice-grid--three">
+                            <label class="choice-card"><input type="radio" name="java-version" value="8"><span><strong>Java 8</strong><small>Fundamentos, lambdas, streams y API de fechas</small></span></label>
+                            <label class="choice-card"><input type="radio" name="java-version" value="11" checked><span><strong>Java 11</strong><small>Incluye características compatibles desde Java 8</small></span></label>
+                            <label class="choice-card"><input type="radio" name="java-version" value="17"><span><strong>Java 17</strong><small>Incluye records, sealed classes y sintaxis moderna</small></span></label>
+                        </div>
+                    </fieldset>
+                    <fieldset class="configuration-group">
+                        <legend>Dificultad</legend>
+                        <div class="choice-grid choice-grid--difficulty">
+                            <label class="choice-card"><input type="radio" name="difficulty" value="EASY"><span><strong>Fácil</strong><small>Conceptos y sintaxis fundamentales</small></span></label>
+                            <label class="choice-card"><input type="radio" name="difficulty" value="MEDIUM"><span><strong>Media</strong><small>Aplicación y análisis de conceptos</small></span></label>
+                            <label class="choice-card"><input type="radio" name="difficulty" value="HARD"><span><strong>Difícil</strong><small>Casos avanzados y preguntas exigentes</small></span></label>
+                            <label class="choice-card"><input type="radio" name="difficulty" value="BALANCED" checked><span><strong>Equilibrada</strong><small>30 % fácil, 40 % media y 30 % difícil</small></span></label>
+                            <label class="choice-card"><input type="radio" name="difficulty" value="JUNIOR"><span><strong>Java Junior</strong><small>50 % fácil, 40 % media y 10 % difícil</small></span></label>
+                            <label class="choice-card"><input type="radio" name="difficulty" value="RANDOM"><span><strong>Aleatoria</strong><small>Mezcla libre del banco disponible</small></span></label>
+                        </div>
+                    </fieldset>
                     <fieldset class="configuration-group">
                         <legend>Cantidad de preguntas</legend>
                         <div class="choice-grid">
@@ -276,6 +295,8 @@
                         </label>
                     </fieldset>
 
+                    <div id="available-questions" class="availability-message" role="status" aria-live="polite"></div>
+
                     <div class="configuration-actions">
                         <button class="button button--secondary" data-route-button="home" type="button">
                             Regresar
@@ -293,6 +314,7 @@
                 <div>
                     <p id="question-topic" class="eyebrow"></p>
                     <h1 id="question-progress">Pregunta 1 de 10</h1>
+                    <p id="exam-configuration-summary" class="exam-configuration-summary"></p>
                 </div>
                 <div class="progress-track" aria-label="Progreso del examen">
                     <div id="progress-bar" class="progress-bar"></div>
@@ -388,6 +410,7 @@
                     <span id="score-percentage">0%</span>
                 </div>
 
+                <p id="result-configuration-summary" class="result-configuration-summary"></p>
                 <p id="score-summary" class="result-summary"></p>
 
                 <div class="result-grid">
@@ -417,8 +440,8 @@
         </section>
     </main>
 
-    <script src="data/questions.js?v=20260630-0900"></script>
-    <script src="data/glossary.js?v=20260630-0900"></script>
-    <script src="js/app.js?v=20260630-0900"></script>
+    <script src="data/questions.js?v=20260701-three-improvements"></script>
+    <script src="data/glossary.js?v=20260701-three-improvements"></script>
+    <script src="js/app.js?v=20260701-three-improvements"></script>
 </body>
 </html>
